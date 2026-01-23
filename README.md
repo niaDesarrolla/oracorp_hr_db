@@ -20,5 +20,15 @@ Durante el desarrollo, se resolvieron los siguientes incidentes críticos:
 * **Interface:** Oracle SQL Developer.
 * **Environment:** Docker Containerization.
 
+## 🛠️ Bitácora de Desarrollo
+
+### Refactorización de Integridad y Estándares (23/01/2026)
+Hoy se realizó una limpieza y mejora profunda del esquema para cumplir con estándares profesionales de bases de datos:
+
+* **Estandarización de Constraints:** Se eliminaron los nombres automáticos de sistema (tipo `SYS_C...`) y se definieron nombres explícitos como `fk_dept` y `fk_job`. Esto permite identificar errores de integridad de forma inmediata.
+* **Ajuste del Modelo de Datos:** Se añadió la columna `hire_date` a la tabla `employees`, esencial para métricas de Recursos Humanos.
+* **Script de Despliegue Limpio:** Se estructuró el archivo SQL para incluir el borrado preventivo (`DROP CASCADE`), la creación de estructura (DDL) y la carga de datos inicial (DML) en un solo flujo.
+* **Validación de Datos:** Se cargaron 5 registros de prueba, incluyendo un caso de borde (empleado sin departamento) para validar futuros reportes (JOINs).
+
 ---
 *Este es un proyecto educativo en constante evolución.*
