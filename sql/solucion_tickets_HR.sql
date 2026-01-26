@@ -47,4 +47,42 @@ ORDER BY d.department_name;
 
 /* INFORME DE AUDITORÍA - TICKET #2026-003
    Resumen: Identificación de unidades de negocio sin personal asignado.
+
    Observaciones: No se detectaron departamentos huérfanos en la carga actual. */
+
+--------------------------------------------------------------------------------
+-- REPORTE EJECUTIVO DE RESULTADOS
+--------------------------------------------------------------------------------
+/* ================================================================================
+CORREO DE CIERRE DE JORNADA - DEPARTAMENTO DE DATOS
+Para: Dirección de RRHH / Gerencia Técnica
+De: Analista de Datos (Niafiola Cartaya)
+Asunto: Resumen de Resolución de Tickets y Auditoría de Integridad - 26/01/2026
+================================================================================
+
+Estimados,
+
+He finalizado la atención de los tickets de soporte programados para hoy. 
+A continuación, el resumen de los hallazgos tras consultar la base de datos:
+
+1. ESTADO DE LA PLANTILLA (#001):
+Se ha validado el listado completo de empleados. El 100% de la fuerza laboral 
+cuenta con una asignación correcta de puesto y departamento.
+
+2. DISTRIBUCIÓN POR DEPARTAMENTO (#002):
+La carga de trabajo se encuentra distribuida entre todas las áreas. Actualmente,
+cada departamento cuenta con un colaborador asignado, manteniendo una 
+estructura inicial equilibrada.
+
+3. AUDITORÍA DE INTEGRIDAD (#003 - Hallazgo Crítico):
+Se realizó una búsqueda exhaustiva de departamentos vacíos (sin personal). 
+RESULTADO: No se detectaron departamentos huérfanos. Todas las unidades de 
+negocio activas en el sistema tienen al menos un responsable vinculado. La 
+base de datos se encuentra limpia y operativamente íntegra.
+
+Los scripts detallados han sido cargados al repositorio para su revisión técnica.
+
+Atentamente,
+Niafiola Cartaya | Data Analyst
+================================================================================
+*/
