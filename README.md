@@ -38,4 +38,10 @@ Hoy se realizó una limpieza y mejora profunda del esquema para cumplir con est�
 * **Validación de Casos de Borde:** Se utilizó el empleado de prueba creado anteriormente para validar el comportamiento de los JOINS y asegurar que los informes de auditoría detecten correctamente las ausencias de asignación.
 
 ---
+### 🚀 Capa de Abstracción y Seguridad (27/01/2026)
+Se implementaron **Vistas (Views)** para optimizar el acceso a la información y mejorar la integridad operativa:
+* **v_maestro_empleados**: Reporte consolidado que unifica datos de empleados, puestos y departamentos mediante JOINS.
+* **v_equipo_contacto**: Aplicación de seguridad lógica que permite el acceso a datos de contacto pero oculta información sensible (Salarios), cumpliendo con estándares de privacidad.
+
+---
 *Este es un proyecto educativo en constante evolución.*
