@@ -10,8 +10,8 @@ Durante el desarrollo, se resolvieron los siguientes incidentes críticos:
 * **Gestión de Esquemas:** Se migró la estructura del esquema `SYSTEM` a un usuario dedicado `C##ORACLE_HR` para seguir las mejores prácticas de seguridad.
 * **Cuotas de Almacenamiento:** Resolución del error de inserción mediante la asignación de `QUOTA UNLIMITED` en el Tablespace USERS.
 * **Integridad Referencial:** Implementación de llaves foráneas para asegurar la relación lógica entre empleados, departamentos y puestos.
-* **Consultas Multitabla y Agregaciones: Resolución de tickets de soporte mediante el uso de JOINS complejos y funciones de agregado (GROUP BY) para generar reportes de nómina y distribución de personal.
-* **Auditoría Preventiva de Datos: Implementación de lógica de conjuntos (LEFT JOIN + IS NULL) para identificar registros huérfanos, garantizando una integridad del 100% en la asignación de departamentos.
+* **Consultas Multitabla y Agregaciones:** Resolución de tickets de soporte mediante el uso de JOINS complejos y funciones de agregado (GROUP BY) para generar reportes de nómina y distribución de personal.
+* **Auditoría Preventiva de Datos:** Implementación de lógica de conjuntos (LEFT JOIN + IS NULL) para identificar registros huérfanos, garantizando una integridad del 100% en la asignación de departamentos.
 
 ## 📂 Estructura del Repositorio
 * `/sql`: Contiene los scripts de configuración (`setup`) y carga de datos.
@@ -34,8 +34,8 @@ Hoy se realizó una limpieza y mejora profunda del esquema para cumplir con est�
 
 ### Resolución de Tickets y Análisis de Datos (26/01/2026)
 
-* **Generación de Reportes: Creación de queries para consolidar datos de empleados, puestos y departamentos en un solo flujo.
-* **Validación de Casos de Borde: Se utilizó el empleado de prueba creado anteriormente para validar el comportamiento de los JOINS y asegurar que los informes de auditoría detecten correctamente las ausencias de asignación.
+* **Generación de Reportes:** Creación de queries para consolidar datos de empleados, puestos y departamentos en un solo flujo.
+* **Validación de Casos de Borde:** Se utilizó el empleado de prueba creado anteriormente para validar el comportamiento de los JOINS y asegurar que los informes de auditoría detecten correctamente las ausencias de asignación.
 
 ---
 *Este es un proyecto educativo en constante evolución.*
