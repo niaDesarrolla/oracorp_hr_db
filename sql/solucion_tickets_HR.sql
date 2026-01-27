@@ -86,3 +86,38 @@ Atentamente,
 Niafiola Cartaya | Data Analyst
 ================================================================================
 */
+
+--------------------------------------------------------------------------------
+-- NUEVOS REQUERIMIENTOS: ARQUITECTURA Y SEGURIDAD (VISTAS)
+-- FECHA: 27/01/2026
+--------------------------------------------------------------------------------
+
+-- TICKET #004: Optimización de Reportabilidad (Vista Maestra)
+-- Resumen: Creación de capa de abstracción para simplificar JOINs recurrentes.
+CREATE OR REPLACE VIEW v_maestro_empleados AS
+SELECT 
+    e.employee_id AS "ID_EMPLEADO",
+    e.first_name || ' ' || e.last_name AS "NOMBRE_COMPLETO",
+    j.job_title AS "PUESTO",
+    d.department_name AS "DEPARTAMENTO",
+    e.salary AS "SALARIO"
+FROM employees e
+LEFT JOIN jobs j ON e.job_id = j.job_id
+LEFT JOIN departments d ON e.department_id = d.department_id;
+
+-- TICKET #005: Control de Acceso y Privacidad (Vista de Seguridad)
+-- Resumen: Implementación de vista restringida para personal administrativo.
+-- Observación: Se excluyó la columna "Salary" para cumplir con políticas de privacidad.
+CREATE OR REPLACE VIEW v_equipo_contacto AS
+SELECT 
+    e.first_name || ' ' || e.last_name AS "NOMBRE_COMPLETO",
+    j.job_title AS "PUESTO",
+    d.department_name AS "DEPARTAMENTO"
+FROM employees e
+LEFT JOIN jobs j ON e.job_id = j.job_id
+LEFT JOIN departments d ON e.department_id = d.department_id;
+
+/* NOTA TÉCNICA DE CIERRE:
+   Se realizó una elevación de privilegios (GRANT CREATE VIEW) desde la cuenta SYSTEM 
+   para permitir que el usuario C##ORACLE_HR gestione estos objetos. 
+   Las vistas han sido validadas y se encuentran operativas. */
