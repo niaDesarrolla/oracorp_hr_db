@@ -121,3 +121,104 @@ LEFT JOIN departments d ON e.department_id = d.department_id;
    Se realizó una elevación de privilegios (GRANT CREATE VIEW) desde la cuenta SYSTEM 
    para permitir que el usuario C##ORACLE_HR gestione estos objetos. 
    Las vistas han sido validadas y se encuentran operativas. */
+
+/* =============================================================================
+   SESIÓN 28/01/2026: INFRAESTRUCTURA Y OPTIMIZACIÓN DE RENDIMIENTO
+   ============================================================================= */
+
+-- REPORTE DE INCIDENCIAS: DESBLOQUEO MANUAL DE INSTANCIA DOCKER
+-- Problema: Interfaz de Docker Desktop bloqueada por procesos en segundo plano.
+-- Solución Manual: 
+-- 1. Apertura de Administrador de Tareas (Ctrl + Shift + Esc).
+-- 2. Identificación de procesos colgados (docker.exe, dockerd, wsl).
+-- 3. Ejecución de "Finalizar árbol de procesos" para limpieza total de memoria.
+-- Resultado: Arranque limpio del contenedor Oracle sin necesidad de reinicio de OS.
+
+--------------------------------------------------------------------------------
+-- TICKET #006: DIAGNÓSTICO DE RENDIMIENTO (EXPLAIN PLAN)
+-- Objetivo: Identificar ineficiencias en la búsqueda por apellido.
+--------------------------------------------------------------------------------
+
+-- Query de auditoría inicial:
+SELECT last_name AS apellido
+FROM employees 
+WHERE last_name = 'Garcia'
+ORDER BY last_name DESC;
+
+/* HALLAZGO TÉCNICO: 
+   A través del Explain Plan, descubrimos un 'TABLE ACCESS FULL'. 
+   Confirmamos que el motor leía toda la tabla (Mensaje FULL en columna Options).
+   Rendimiento: COSTO 3, indicando ineficiencia en el uso del procesador.
+*/
+
+--------------------------------------------------------------------------------
+-- TICKET #007: IMPLEMENTACIÓN DE "BÚSQUEDA RÁPIDA" (B-TREE INDEX)
+-- Objetivo: Eliminar el escaneo total de la tabla.
+--------------------------------------------------------------------------------
+
+-- 1. Elevación de privilegios (Admin):
+-- GRANT CREATE ANY INDEX TO C##ORACLE_HR;
+
+-- 2. Creación del índice:
+CREATE INDEX idx_emp_last_name ON employees(last_name);
+
+/* RESULTADO: 
+   La operación en el Plan de Ejecución cambió a 'INDEX FAST FULL SCAN'. 
+   Se sustituyó la lectura secuencial de disco por una búsqueda indexada.
+*/
+
+--------------------------------------------------------------------------------
+-- TICKET #008: OPTIMIZACIÓN DE RELACIONES (INDEXACIÓN DE FK)
+-- Objetivo: Blindar el rendimiento de los JOINS para reportes financieros.
+--------------------------------------------------------------------------------
+
+-- Índice para optimizar los JOINS por Departamento
+CREATE INDEX idx_emp_dept_id ON employees(department_id);
+
+-- Índice para optimizar búsquedas por Puesto
+CREATE INDEX idx_emp_job_id ON employees(job_id);
+
+-- Persistencia de cambios
+COMMIT;
+
+/* =============================================================================
+   FIN DE LA JORNADA - OBJETIVOS CUMPLIDOS
+   ============================================================================= */
+/* ================================================================================
+CORREO DE CIERRE DE JORNADA - DEPARTAMENTO DE DATOS
+Para: Dirección de RRHH / Gerencia Técnica 
+De: Analista de Datos (Niafiola Cartaya)
+Asunto: Reporte de Optimización de Performance y Estabilización de Entorno HR - 28/01/2026
+================================================================================
+
+Estimados,
+
+He completado las tareas de optimización de la base de datos de Nómina programadas 
+para hoy. A continuación, el resumen de los hitos alcanzados:
+
+1. CONTINUIDAD OPERATIVA:
+Se resolvió un incidente crítico en el entorno Docker (procesos zombies), 
+restableciendo la conexión con el servidor Oracle mediante la finalización 
+manual del árbol de procesos en el sistema, sin pérdida de datos.
+
+2. OPTIMIZACIÓN DE CONSULTAS:
+Mediante el análisis de Explain Plans, detectamos ineficiencias (Table Access Full) 
+en las búsquedas por apellido. El motor realizaba lecturas secuenciales completas 
+con un costo de CPU inicial de 3.
+
+3. IMPLEMENTACIÓN DE ÍNDICES (#007 y #008):
+Se crearon estructuras de indexación B-Tree en las columnas LAST_NAME, 
+DEPARTMENT_ID y JOB_ID. 
+RESULTADO: El motor ahora realiza un 'INDEX FAST FULL SCAN', reduciendo el 
+tiempo de respuesta para los reportes de Gerencia y Finanzas.
+
+4. SEGURIDAD Y PERSISTENCIA:
+Se validaron y ajustaron los privilegios administrativos (DCL) para garantizar 
+la integridad del esquema. Los cambios han sido persistidos con COMMIT.
+
+Quedo a disposición para cualquier duda técnica.
+
+Atentamente,
+Niafiola Cartaya | Analista de Datos
+================================================================================
+*/
