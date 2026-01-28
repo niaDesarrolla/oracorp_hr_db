@@ -32,6 +32,14 @@
 - **Arquitectura vs. Rendimiento:** Se analizó que el uso de Vistas optimiza la **mantenibilidad** y legibilidad del código, aunque el rendimiento de las consultas sigue dependiendo de la indexación de las tablas base.
 - **Implementación de Seguridad Lógica:** Se confirmó la efectividad de las vistas para el control de acceso a nivel de columna. Intentos de acceso a columnas no expuestas (como `salary`) resultan en `ORA-00904: invalid identifier`, garantizando la protección de datos sensibles.
 
+## 🧠 Notas Técnicas y Optimización (28/01/2026)
+
+- **Troubleshooting de Infraestructura (Docker):** Se identificó un bloqueo crítico por procesos "zombies". La solución efectiva consistió en la finalización del árbol de procesos desde el Administrador de Tareas (`docker.exe`, `wsl`), un método más agresivo y rápido que el reinicio de servicios estándar cuando la interfaz no responde.
+- **Análisis de Rendimiento (Explain Plan):** El uso de herramientas de diagnóstico permitió evidenciar que el motor de Oracle optaba por un `TABLE ACCESS FULL` para búsquedas simples. Se concluye que, sin índices, el costo de procesamiento aumenta linealmente con el volumen de datos.
+- **Tuning mediante Índices B-Tree:** Se implementó una estrategia de indexación en columnas de alta cardinalidad (`LAST_NAME`) y en llaves foráneas (`DEPT_ID`, `JOB_ID`). Esto transforma la búsqueda secuencial en una búsqueda logarítmica (`INDEX FAST FULL SCAN`), optimizando los tiempos de respuesta en JOINS complejos.
+- **Persistencia y Diccionario de Datos:** Se reafirma la importancia de ejecutar `COMMIT` tras la creación de objetos y asegurar que los privilegios de creación de índices estén correctamente otorgados para evitar errores de permisos en tiempo de ejecución.
+
+  
 ## 📖 Convenciones MD
 
 * **Refactorizar:** Proceso de reestructurar código existente para mejorar su calidad y legibilidad sin alterar su comportamiento externo.
@@ -45,6 +53,9 @@
 * **Alias de Columnas:** En las vistas destinadas a usuarios finales o reportes, se utilizarán alias en **MAYÚSCULAS** y con nombres descriptivos (ej. `first_name` AS `"NOMBRE"`) para mejorar la legibilidad del reporte final.
 * **Uso de Operadores de Conciliación:** Para campos de nombre, se estandariza el uso del operador `||` con espacios intermedios para entregar resultados listos para su uso ejecutivo.
 * **Documentación de Privilegios:** Toda elevación de permisos (como `GRANT`) debe quedar registrada en el script de carga o notas técnicas para asegurar la trazabilidad de la configuración del entorno.
+### 📝 Convenciones de Naming y Estructura (28/01/2026)
+* **Prefijos para Índices:** Se estandariza el uso del prefijo `idx_` seguido del nombre de la tabla y la columna (ej. `idx_emp_last_name`). Esta convención permite una identificación rápida dentro del esquema y facilita la auditoría de performance.
+* **Mensajes de Commit (Estándar Profesional):** Se adopta el uso de prefijos de tipo de cambio (`feat:`, `fix:`, `docs:`) en español e imperativo, alineando el flujo de trabajo con las mejores prácticas de la industria.
 
 
 
