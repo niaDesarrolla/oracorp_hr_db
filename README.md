@@ -14,6 +14,9 @@ Durante el desarrollo, se resolvieron los siguientes incidentes críticos:
 * **Auditoría Preventiva de Datos:** Implementación de lógica de conjuntos (LEFT JOIN + IS NULL) para identificar registros huérfanos, garantizando una integridad del 100% en la asignación de departamentos.
 * **Optimización de Base de Datos (Tuning SQL):** Identificación de cuellos de botella mediante EXPLAIN PLAN y resolución de lecturas ineficientes (TABLE ACCESS FULL) mediante la implementación de índices B-Tree, optimizando el rendimiento de busquedas y JOINS.
 * **Resiliencia de Infraestructura:** Recuperación del entorno  operativo ante un bloqueo crítico de Docker Desktop mediante la finalización manual del árbol de procesos "zombies", asegurando la continuidad del servicio sin pérdida de datos.
+* * **Gestión de Integridad Referencial y Errores ORA:** Resolución de bloqueos de transacción mediante el diagnóstico técnico de errores **ORA-02291** (Foreign Key no encontrada) y **ORA-02292** (violación de registro hijo). Implementación de jerarquías "Padre-Hijo" para garantizar la consistencia de los datos.
+* **Control de Transacciones Atómicas:** Sincronización de discrepancias entre auditorías visuales y ejecuciones de borrado. Gestión del estado de datos en el *buffer* de memoria mediante el uso estratégico de **COMMIT** y **ROLLBACK**, asegurando la persistencia de la información crítica.
+* **Optimización de Consultas Agregadas:** Dominio del **Orden de Ejecución Lógico de SQL** para la resolución de conflictos de alcance de *Alias* y filtrado de grupos complejos, optimizando el procesamiento del motor de base de datos.
 
 ## 📂 Estructura del Repositorio
 * `/sql`: Contiene los scripts de configuración (`setup`) y carga de datos.
@@ -64,5 +67,27 @@ Se realizó una auditoría de rendimiento sobre el esquema de Recursos Humanos, 
 - **Resultado:** Migración de escaneos secuenciales a **INDEX FAST FULL SCAN**, reduciendo el costo de procesamiento y mejorando el tiempo de respuesta.
 
 ---
+### 🔹 DML Dinámico y Refactorización (10/02/2026)
+* **Problema:** Necesidad de actualizar dominios de correo masivos y asignar salarios basados en techos salariales dinámicos.
+* **Solución:** Aplicación de `UPDATE` utilizando funciones de manipulación de strings (`REPLACE`) y **Subqueries Escalares** para parametrizar el nuevo salario con el `MAX` de la tabla de forma automática.
+* **Aprendizaje:** Implementación de flujos de validación previa (`SELECT`) antes de la ejecución de cambios permanentes para mitigar riesgos de actualización masiva errónea.
+
+### 🔹 Saneamiento e Integridad Referencial (11/02/2026)
+* **Problema:** Existencia de registros huérfanos con claves foráneas nulas que comprometían la integridad de los reportes.
+* **Solución:** Ejecución de sentencias `DELETE FROM` utilizando el operador `IS NULL` para realizar un saneamiento físico de la tabla `EMPLOYEES`.
+* **Aprendizaje:** Identificación de la persistencia de datos en el buffer de sesión; comprensión de cómo el motor de Oracle reporta filas afectadas que no han sido consolidadas en el almacenamiento físico.
+
+### 🔹 Lógica de Agregación y Filtrado Grupal (12/02/2026)
+* **Problema:** Requerimiento de reportes gerenciales filtrados por métricas de grupo (promedios) que el comando `WHERE` no puede procesar.
+* **Solución:** Estructuración de consultas con `GROUP BY` y `HAVING` para filtrar departamentos con promedios superiores a $8,000, integrando funciones anidadas como `MAX(AVG(salary))`.
+* **Aprendizaje:** Jerarquía de ejecución de cláusulas SQL; validación de por qué los *Alias* del `SELECT` solo son accesibles en la etapa final de ordenamiento (`ORDER BY`).
+
+### 🔹 Integración Masiva con MERGE (13/02/2026)
+* **Problema:** Necesidad de sincronizar una tabla de novedades de nómina que incluye tanto actualizaciones de empleados existentes como inserciones de nuevos ingresos.
+* **Solución:** Implementación de la sentencia **MERGE (UPSERT)** para realizar operaciones de `UPDATE` e `INSERT` de forma atómica, utilizando `UPPER` para estandarizar la entrada de metadatos.
+* **Aprendizaje:** Gestión de inmutabilidad en tablas fuente; validación de que los procesos de integración no alteran los datos de origen mientras transforman el destino.
+
+---
+
 ---
 *Este es un proyecto educativo en constante evolución.*
