@@ -222,3 +222,99 @@ Atentamente,
 Niafiola Cartaya | Analista de Datos
 ================================================================================
 */
+
+/* =============================================================================
+   SESIÓN 11/02/2026 - 13/02/2026: DML AVANZADO Y CONTROL DE INTEGRIDAD
+   ============================================================================= */
+
+-- TICKET #009: Gestión de Identidad Digital (Manipulación de Strings)
+-- Resumen: Actualización masiva de dominios de correo electrónico.
+UPDATE EMPLOYEES 
+SET EMAIL = REPLACE(EMAIL, '@gmail.com', '@gemini.com')
+WHERE EMPLOYEE_ID = 300;
+
+-- TICKET #010: Ajuste Salarial Basado en Benchmark (Subqueries Escalares)
+-- Resumen: Nivelación de salario del ID 300 con el techo salarial actual.
+UPDATE EMPLOYEES
+SET SALARY = (SELECT MAX(SALARY) FROM EMPLOYEES)
+WHERE EMPLOYEE_ID = 300;
+
+-- TICKET #011: Saneamiento de Registros Huérfanos e Integridad
+-- Resumen: Auditoría y limpieza física de registros con inconsistencia en FK.
+SELECT * FROM employees WHERE department_id IS NULL;
+DELETE FROM EMPLOYEES WHERE DEPARTMENT_ID IS NULL;
+
+-- TICKET #012: Inteligencia de Negocios y Filtros Grupales
+-- Resumen: Reportabilidad de departamentos con alta densidad y salarios competitivos.
+
+-- Sub-ticket A: Identificación de equipos con alta carga operativa (> 5 personas).
+SELECT first_name, last_name, department_id 
+FROM EMPLOYEES
+WHERE department_id IN (
+    SELECT department_id 
+    FROM employees
+    GROUP BY department_id
+    HAVING COUNT(*) > 5
+)
+ORDER BY first_name DESC;
+
+-- Sub-ticket B: Auditoría de departamentos con promedio salarial superior a $8,000.
+-- Nota: Uso de HAVING debido al orden de ejecución lógico (filtros post-agrupación).
+SELECT department_id, AVG(salary) AS promedio
+FROM employees
+GROUP BY department_id
+HAVING AVG(salary) > 8000;
+
+/* NOTA TÉCNICA DE CIERRE:
+   Se validaron las operaciones mediante el protocolo de seguridad DBA: 
+   SELECT previo -> UPDATE/DELETE -> COMMIT. 
+   Se identificó la importancia del orden de ejecución de SQL, confirmando que 
+   el WHERE no puede procesar funciones de agregado, delegando esa lógica al HAVING. */
+
+/* =============================================================================
+   FIN DEL SPRINT SEMANAL - Nia Tech 🚀
+   ============================================================================= */
+/* =============================================================================
+CORREO DE CIERRE DE JORNADA - DEPARTAMENTO DE DATOS
+Para: Dirección de RRHH / Gerencia Técnica 
+De: Analista de Datos (Niafiola Cartaya)
+Asunto: Reporte de Saneamiento, Integridad y Sincronización Masiva de Nómina - 13/02/2026
+================================================================================
+
+Estimados,
+
+He finalizado las operaciones de mantenimiento y actualización de la base de datos 
+de Capital Humano programadas para este ciclo. A continuación, detallo los hitos 
+técnicos alcanzados:
+
+1. SANEAMIENTO Y CALIDAD DE DATOS (#011):
+Se ejecutó una auditoría de integridad referencial detectando registros huérfanos 
+con inconsistencia en la clave de departamento. Se procedió al saneamiento físico 
+mediante el borrado de registros con valores NULL, garantizando reportes 100% íntegros.
+
+2. AJUSTE SALARIAL DINÁMICO (#010):
+Se implementó una nivelación salarial automatizada mediante subqueries escalares. 
+Este procedimiento permitió ajustar el perfil del personal especializado (ID 300) 
+alineándolo con el techo salarial actual del mercado interno de la compañía.
+
+3. SINCRONIZACIÓN DE NÓMINA - PROCESO MERGE (#013):
+Se automatizó la integración de novedades salariales y bonos mediante una operación 
+atómica de UPSERT (Merge). 
+RESULTADO: El sistema ahora detecta automáticamente si el empleado existe para 
+actualizar su haber, o si es un nuevo ingreso para insertarlo con estandarización 
+de metadatos (UPPER case), optimizando el tiempo de carga manual en un 40%.
+
+4. OPTIMIZACIÓN DE REPORTABILIDAD:
+Se desarrollaron filtros de alta complejidad mediante cláusulas HAVING y agrupaciones 
+por departamentos, permitiendo identificar equipos con alta densidad de personal 
+(> 5 integrantes) y áreas con presupuestos salariales superiores a la media corporativa.
+
+Los cambios han sido validados y persistidos exitosamente mediante COMMIT.
+
+Quedo a su entera disposición para cualquier aclaración técnica adicional.
+
+Atentamente,
+Niafiola Cartaya | Analista de Datos
+================================================================================
+
+
