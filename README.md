@@ -14,9 +14,11 @@ Durante el desarrollo, se resolvieron los siguientes incidentes críticos:
 * **Auditoría Preventiva de Datos:** Implementación de lógica de conjuntos (LEFT JOIN + IS NULL) para identificar registros huérfanos, garantizando una integridad del 100% en la asignación de departamentos.
 * **Optimización de Base de Datos (Tuning SQL):** Identificación de cuellos de botella mediante EXPLAIN PLAN y resolución de lecturas ineficientes (TABLE ACCESS FULL) mediante la implementación de índices B-Tree, optimizando el rendimiento de busquedas y JOINS.
 * **Resiliencia de Infraestructura:** Recuperación del entorno  operativo ante un bloqueo crítico de Docker Desktop mediante la finalización manual del árbol de procesos "zombies", asegurando la continuidad del servicio sin pérdida de datos.
-* * **Gestión de Integridad Referencial y Errores ORA:** Resolución de bloqueos de transacción mediante el diagnóstico técnico de errores **ORA-02291** (Foreign Key no encontrada) y **ORA-02292** (violación de registro hijo). Implementación de jerarquías "Padre-Hijo" para garantizar la consistencia de los datos.
+ * **Gestión de Integridad Referencial y Errores ORA:** Resolución de bloqueos de transacción mediante el diagnóstico técnico de errores **ORA-02291** (Foreign Key no encontrada) y **ORA-02292** (violación de registro hijo). Implementación de jerarquías "Padre-Hijo" para garantizar la consistencia de los datos.
 * **Control de Transacciones Atómicas:** Sincronización de discrepancias entre auditorías visuales y ejecuciones de borrado. Gestión del estado de datos en el *buffer* de memoria mediante el uso estratégico de **COMMIT** y **ROLLBACK**, asegurando la persistencia de la información crítica.
 * **Optimización de Consultas Agregadas:** Dominio del **Orden de Ejecución Lógico de SQL** para la resolución de conflictos de alcance de *Alias* y filtrado de grupos complejos, optimizando el procesamiento del motor de base de datos.
+* **Sincronización de Datos mediante Subconsultas Correlacionadas (UPDATE):** Se superó la limitación de las actualizaciones masivas convencionales mediante el uso de subconsultas correlacionadas. Este enfoque permitió que la tabla oficial (EMPLOYEES) sincronizara atributos específicos (como salarios y nombres) basándose en una tabla de origen externa (EMPLOYEES_TEMP), garantizando que solo se modificaran los registros vinculados y manteniendo la integridad del resto de la data.
+* **Garantía de Idempotencia en Procesos de Inserción (Filtro **NOT EXISTS**):** Se implementó un blindaje lógico en el comando **INSERT** mediante la cláusula **WHERE NOT EXISTS**. Esta técnica previene el error crítico **ORA-00001**(violación de Primary Key) al validar la preexistencia del registro antes de intentar la escritura. Este **filtro de seguridad** otorga resiliencia al script, permitiendo ejecuciones recurrentes sin generar duplicados ni interrupciones por errores de identidad.
 
 ## 📂 Estructura del Repositorio
 * `/sql`: Contiene los scripts de configuración (`setup`) y carga de datos.
@@ -29,24 +31,31 @@ Durante el desarrollo, se resolvieron los siguientes incidentes críticos:
 
 ## 🛠️ Bitácora de Desarrollo
 
-### Refactorización de Integridad y Estándares (23/01/2026)
-Hoy se realizó una limpieza y mejora profunda del esquema para cumplir con estándares profesionales de bases de datos:
+#### Refactorización de Integridad y Estándares (23/01/2026)
 
-* **Estandarización de Constraints:** Se eliminaron los nombres automáticos de sistema (tipo `SYS_C...`) y se definieron nombres explícitos como `fk_dept` y `fk_job`. Esto permite identificar errores de integridad de forma inmediata.
-* **Ajuste del Modelo de Datos:** Se añadió la columna `hire_date` a la tabla `employees`, esencial para métricas de Recursos Humanos.
-* **Script de Despliegue Limpio:** Se estructuró el archivo SQL para incluir el borrado preventivo (`DROP CASCADE`), la creación de estructura (DDL) y la carga de datos inicial (DML) en un solo flujo.
-* **Validación de Datos:** Se cargaron 5 registros de prueba, incluyendo un caso de borde (empleado sin departamento) para validar futuros reportes (JOINs).
+**1. Estandarización de Constraints**
+* **Problema:** Dificultad para identificar fallos de integridad debido al uso de nombres automáticos del sistema (tipo `SYS_C...`).
+* **Solución:** Se definieron nombres explícitos y estandarizados (ej. `fk_dept`, `fk_job`), permitiendo una depuración inmediata de errores.
+* **Aprendizaje:** La nomenclatura explícita en objetos de esquema es una buena práctica de ingeniería que facilita el mantenimiento y la escalabilidad del modelo.
 
-### Resolución de Tickets y Análisis de Datos (26/01/2026)
+**2. Ajuste del Modelo y Script de Despliegue**
+* **Problema:** Ausencia de atributos temporales críticos y falta de un flujo de despliegue automatizado.
+* **Solución:** Se incorporó la columna `hire_date` y se estructuró un script integral que incluye borrado preventivo (`DROP CASCADE`), DDL y DML en un solo flujo.
+* **Aprendizaje:** Un script de despliegue "limpio" garantiza la repetibilidad del entorno y asegura que el modelo de datos cumpla con los requisitos de negocio (KPIs de RRHH).
 
-* **Generación de Reportes:** Creación de queries para consolidar datos de empleados, puestos y departamentos en un solo flujo.
-* **Validación de Casos de Borde:** Se utilizó el empleado de prueba creado anteriormente para validar el comportamiento de los JOINS y asegurar que los informes de auditoría detecten correctamente las ausencias de asignación.
+#### Resolución de Tickets y Análisis de Datos (26/01/2026)
 
----
-### 🚀 Capa de Abstracción y Seguridad (27/01/2026)
-Se implementaron **Vistas (Views)** para optimizar el acceso a la información y mejorar la integridad operativa:
-* **v_maestro_empleados**: Reporte consolidado que unifica datos de empleados, puestos y departamentos mediante JOINS.
-* **v_equipo_contacto**: Aplicación de seguridad lógica que permite el acceso a datos de contacto pero oculta información sensible (Salarios), cumpliendo con estándares de privacidad.
+**1. Consolidación de Reportes y Casos de Borde**
+* **Problema:** Necesidad de visualizar información dispersa en múltiples tablas y validar la resiliencia de las consultas ante datos incompletos.
+* **Solución:** Se desarrollaron queries complejas para consolidar empleados, puestos y departamentos, utilizando registros de prueba diseñados para testear el comportamiento de los `JOINs`.
+* **Aprendizaje:** El análisis de "casos de borde" (como empleados sin departamento) es fundamental para asegurar que los informes de auditoría reflejen la realidad operativa sin pérdida de información.
+
+#### Capa de Abstracción y Seguridad (27/01/2026)
+
+**1. Implementación de Vistas (Views)**
+* **Problema:** Complejidad en el acceso recurrente a reportes consolidados y exposición innecesaria de información sensible.
+* **Solución:** Se implementaron vistas como `v_maestro_empleados` para simplificar el acceso a datos y `v_equipo_contacto` para ocultar campos críticos (salarios) mediante seguridad lógica.
+* **Aprendizaje:** La creación de una capa de abstracción mejora la experiencia del usuario final y permite aplicar políticas de privacidad de datos sin alterar la estructura física de las tablas.
 
 ---
 
@@ -60,11 +69,9 @@ Se implementaron **Vistas (Views)** para optimizar el acceso a la información y
 ### 📈 Optimización de Base de Datos (Tuning SQL)
 Se realizó una auditoría de rendimiento sobre el esquema de Recursos Humanos, detectando cuellos de botella en las consultas principales.
 
-- **Diagnóstico:** Uso de `EXPLAIN PLAN` para identificar un `TABLE ACCESS FULL` en la tabla de empleados.
-- **Acción:** Creación de índices estratégicos:
-  - `idx_emp_last_name`: Optimización de búsquedas por apellidos.
-  - `idx_emp_dept_id` & `idx_emp_job_id`: Optimización de integridad referencial y `JOINS`.
-- **Resultado:** Migración de escaneos secuenciales a **INDEX FAST FULL SCAN**, reduciendo el costo de procesamiento y mejorando el tiempo de respuesta.
+* **Problema:** Se detectaron cuellos de botella en las consultas principales del esquema de Recursos Humanos, identificando un `TABLE ACCESS FULL` mediante el uso de `EXPLAIN PLAN` en la tabla de empleados.
+* **Solución:** Se diseñaron e implementaron índices estratégicos (`idx_emp_last_name`, `idx_emp_dept_id` e `idx_emp_job_id`) para optimizar las búsquedas por apellidos, la integridad referencial y el rendimiento de los `JOINS`.
+* **Aprendizaje:** La migración de escaneos secuenciales a **INDEX FAST FULL SCAN** permite reducir drásticamente el costo de procesamiento (CPU/IO) y mejorar los tiempos de respuesta, demostrando que un diseño físico orientado a la consulta es tan vital como el diseño lógico.
 
 ---
 ### 🔹 DML Dinámico y Refactorización (10/02/2026)
@@ -88,6 +95,27 @@ Se realizó una auditoría de rendimiento sobre el esquema de Recursos Humanos, 
 * **Aprendizaje:** Gestión de inmutabilidad en tablas fuente; validación de que los procesos de integración no alteran los datos de origen mientras transforman el destino.
 
 ---
+#### Sincronización Lógica y Validación de Integridad Referencial (17/03/2026)
+
+**1. Implementación de Staging Area**
+* **Problema:** Necesidad de manipular y sanear datos externos sin afectar directamente las tablas maestras de producción.
+* **Solución:** Se crearon estructuras temporales (`EMPLOYEES_TEMP`) para actuar como una capa intermedia de preparación de datos.
+* **Aprendizaje:** El uso de tablas de *Staging* permite realizar pruebas de carga y validaciones de tipos de datos de forma aislada, reduciendo el riesgo de corrupción en la base de datos oficial.
+
+**2. Blindaje de Foreign Keys**
+* **Problema:** Riesgo de interrupción de scripts masivos debido a errores de orfandad de datos (**ORA-02291**) al intentar insertar registros con departamentos inexistentes.
+* **Solución:** Se aplicaron filtros proactivos mediante la cláusula `EXISTS` para validar la existencia de llaves foráneas en la tabla `DEPARTMENTS` antes de procesar cada fila.
+* **Aprendizaje:** La validación lógica previa a la inserción es más eficiente que el manejo de excepciones, ya que permite que el script continúe procesando los registros válidos sin detener la ejecución.
+
+**3. Gestión de Transacciones y Persistencia**
+* **Problema:** Pérdida de volatilidad de datos en la tabla de *Staging* y falta de visibilidad de los cambios tras la ejecución de scripts.
+* **Solución:** Se reforzó el flujo de trabajo mediante el uso mandatorio de sentencias `COMMIT` para asegurar la persistencia física de los datos en el motor Oracle XE.
+* **Aprendizaje:** En Oracle, la gestión explícita de transacciones es vital; un script exitoso sin confirmación de cambios equivale a una operación no realizada en el almacenamiento persistente.
+
+**4. Troubleshooting de Registros Existentes**
+* **Problema:** Colisión de datos y errores de duplicidad al intentar insertar registros cuyos IDs ya se encontraban en la tabla de destino.
+* **Solución:** Se realizó un diagnóstico de colisiones que derivó en un cambio de estrategia, pasando de un `INSERT` fallido a un `UPDATE` correlacionado para actualizar perfiles preexistentes.
+* **Aprendizaje:** La flexibilidad para alternar entre inserción y actualización (lógica *Upsert*) es fundamental para mantener la sincronía entre tablas sin violar las restricciones de unicidad de la Primary Key.
 
 ---
 *Este es un proyecto educativo en constante evolución.*
