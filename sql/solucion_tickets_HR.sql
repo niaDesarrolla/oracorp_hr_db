@@ -317,4 +317,147 @@ Atentamente,
 Niafiola Cartaya | Analista de Datos
 ================================================================================
 
+/*
+/* =============================================================================
+   SESIÓN 17/03/2026 - Sincronización de datos entre Staging (TEMP) y Producción (OFFICIAL)
+   ============================================================================= */
+-- ==========================================================
+-- 1. PREPARACIÓN DEL ENTORNO (STAGING AREA)
+-- ==========================================================
+
+-- Borrado preventivo de la tabla temporal para asegurar un entorno limpio
+BEGIN
+   EXECUTE IMMEDIATE 'DROP TABLE EMPLOYEES_TEMP';
+EXCEPTION
+   WHEN OTHERS THEN
+      IF SQLCODE != -942 THEN RAISE; END IF; -- Ignora error si la tabla no existe
+END;
+/
+
+-- Creación de tabla temporal basada en la estructura de EMPLOYEES
+CREATE TABLE EMPLOYEES_TEMP AS 
+SELECT * FROM EMPLOYEES WHERE 1=0;
+
+-- ==========================================================
+-- 2. CARGA DE DATOS EN STAGING (CASOS DE PRUEBA)
+-- ==========================================================
+
+-- Caso 1: Actualización de registro existente (Cambio de salario)
+INSERT INTO EMPLOYEES_TEMP (EMPLOYEE_ID, FIRST_NAME, LAST_NAME, SALARY, DEPARTMENT_ID, JOB_ID, EMAIL, HIRE_DATE)
+VALUES (100, 'Steven', 'King', 35000, 90, 'AD_PRES', 'SKING', SYSDATE);
+
+-- Caso 2: Nuevo registro válido
+INSERT INTO EMPLOYEES_TEMP (EMPLOYEE_ID, FIRST_NAME, LAST_NAME, SALARY, DEPARTMENT_ID, JOB_ID, EMAIL, HIRE_DATE)
+VALUES (999, 'Nia', 'SQL', 50000, 10, 'IT_PROG', 'NSQL', SYSDATE);
+
+-- Caso 3: Registro inválido (Departamento 999 no existe - Blindaje FK)
+INSERT INTO EMPLOYEES_TEMP (EMPLOYEE_ID, FIRST_NAME, LAST_NAME, SALARY, DEPARTMENT_ID, JOB_ID, EMAIL, HIRE_DATE)
+VALUES (888, 'Error', 'Test', 10000, 999, 'IT_PROG', 'ETEST', SYSDATE);
+
+COMMIT;
+
+-- ==========================================================
+-- 3. PROCESAMIENTO Y MIGRACIÓN LÓGICA
+-- ==========================================================
+
+-- A. ACTUALIZACIÓN: Sincronización de registros preexistentes mediante subconsulta correlacionada
+UPDATE EMPLOYEES e
+SET (e.FIRST_NAME, e.LAST_NAME, e.SALARY) = 
+    (SELECT t.FIRST_NAME, t.LAST_NAME, t.SALARY 
+     FROM EMPLOYEES_TEMP t 
+     WHERE t.EMPLOYEE_ID = e.EMPLOYEE_ID)
+WHERE EXISTS (
+    SELECT 1 
+    FROM EMPLOYEES_TEMP t 
+    WHERE t.EMPLOYEE_ID = e.EMPLOYEE_ID
+);
+
+-- B. INSERCIÓN: Carga de nuevos registros con validación de existencia e integridad referencial
+INSERT INTO EMPLOYEES (EMPLOYEE_ID, FIRST_NAME, LAST_NAME, SALARY, DEPARTMENT_ID, JOB_ID, EMAIL, HIRE_DATE)
+SELECT t.EMPLOYEE_ID, t.FIRST_NAME, t.LAST_NAME, t.SALARY, t.DEPARTMENT_ID, t.JOB_ID, t.EMAIL, t.HIRE_DATE
+FROM EMPLOYEES_TEMP t
+WHERE NOT EXISTS (
+    SELECT 1 FROM EMPLOYEES e WHERE e.EMPLOYEE_ID = t.EMPLOYEE_ID
+)
+AND EXISTS (
+    SELECT 1 FROM DEPARTMENTS d WHERE d.DEPARTMENT_ID = t.DEPARTMENT_ID
+);
+
+COMMIT;
+
+-- ==========================================================
+-- 4. AUDITORÍA Y VALIDACIÓN FINAL
+-- ==========================================================
+
+-- Verificación de la carga exitosa del ID 999
+SELECT 'REPORTE DE SINCRONIZACIÓN' as Operacion, 
+       e.EMPLOYEE_ID, 
+       e.FIRST_NAME, 
+       e.SALARY, 
+       d.DEPARTMENT_NAME
+FROM EMPLOYEES e
+JOIN DEPARTMENTS d ON e.DEPARTMENT_ID = d.DEPARTMENT_ID
+WHERE e.EMPLOYEE_ID = 999;
+
+-- Verificación de rechazo del ID 888 (No debe aparecer en EMPLOYEES)
+SELECT COUNT(*) as Registros_Invalidos_En_Oficial 
+FROM EMPLOYEES 
+WHERE EMPLOYEE_ID = 888;
+
+/*
+  ==========================================================
+  NOTA TÉCNICA DE CIERRE:
+  Se validaron las operaciones mediante el protocolo de seguridad DBA:
+  SELECCIONAR anterior -> ACTUALIZAR/ELIMINAR -> CONFIRMAR.
+  Se identificó la importancia de la lógica de conjuntos para la 
+  idempotencia del script, asegurando que ejecuciones múltiples no 
+  generen inconsistencias en la Primary Key.
+  ==========================================================
+*/
+
+/*==========================================================
+   FIN DEL SPRINT SEMANAL - Nia Tech 🚀
+============================================================*/
+
+/*==========================================================
+CORREO DE CIERRE DE JORNADA - DEPARTAMENTO DE DATOS
+Para: Dirección de RRHH / Gerencia Técnica
+De: Analista de Datos (Nia)
+Asunto: Reporte de Saneamiento, Integridad y Sincronización de Nómina - 17/03/2026
+============================================================
+
+Estimados,
+
+He finalizado las operaciones de mantenimiento y actualización de la base de datos
+de Capital Humano programadas para este ciclo. A continuación, detallo los hitos
+técnicos alcanzados:
+
+1. SANEAMIENTO Y CALIDAD DE DATOS (#014):
+Se ejecutó una auditoría de integridad referencial detectando registros con inconsistencias
+en la clave de departamento. Se procedió al filtrado preventivo mediante la cláusula EXISTS,
+garantizando que solo la data íntegra sea procesada hacia las tablas oficiales.
+
+2. AJUSTE SALARIAL DINÁMICO (#015):
+Se implementó una sincronización de perfiles mediante subconsultas correlacionadas.
+Este procedimiento permitió actualizar el perfil del personal (ID 999) alineándolo
+con los datos validados en el área de Staging.
+
+3. RESILIENCIA DE CARGA - PROCESO IDEMPOTENTE (#016):
+Se automatizó la integración de novedades mediante un flujo de seguridad 'NOT EXISTS'.
+RESULTADO: El sistema ahora detecta automáticamente si el empleado ya existe para
+ignorar su inserción, optimizando el tiempo de carga y evitando errores de duplicidad.
+
+4. VALIDACIÓN DE INTEGRIDAD REFERENCIAL:
+Se desarrollaron filtros de alta fidelidad para bloquear ingresos de personal en áreas
+inexistentes del esquema (ID 888), asegurando que la arquitectura de datos se mantenga
+alineada con la estructura organizacional vigente.
+
+Los cambios han sido validados y persistidos exitosamente mediante COMMIT.
+
+Quedo a su entera disposición para cualquier aclaración técnica adicional.
+
+Atentamente,
+Nia | Analista de Datos
+============================================================*/
+
 
