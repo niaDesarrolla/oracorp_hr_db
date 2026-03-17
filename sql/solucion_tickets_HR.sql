@@ -422,7 +422,7 @@ WHERE EMPLOYEE_ID = 888;
 /*==========================================================
 CORREO DE CIERRE DE JORNADA - DEPARTAMENTO DE DATOS
 Para: Dirección de RRHH / Gerencia Técnica
-De: Analista de Datos (Nia)
+De: Analista de Datos (Niafiola Cartaya)
 Asunto: Reporte de Saneamiento, Integridad y Sincronización de Nómina - 17/03/2026
 ============================================================
 
@@ -457,7 +457,7 @@ Los cambios han sido validados y persistidos exitosamente mediante COMMIT.
 Quedo a su entera disposición para cualquier aclaración técnica adicional.
 
 Atentamente,
-Nia | Analista de Datos
+Niafiola Cartaya | Analista de Datos
 ============================================================*/
 
 
