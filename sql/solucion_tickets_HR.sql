@@ -56,7 +56,7 @@ ORDER BY d.department_name;
 /* ================================================================================
 CORREO DE CIERRE DE JORNADA - DEPARTAMENTO DE DATOS
 Para: Dirección de RRHH / Gerencia Técnica
-De: Analista de Datos (Niafiola Cartaya)
+De: Data Engineer (Niafiola Cartaya)
 Asunto: Resumen de Resolución de Tickets y Auditoría de Integridad - 26/01/2026
 ================================================================================
 
@@ -83,7 +83,7 @@ base de datos se encuentra limpia y operativamente íntegra.
 Los scripts detallados han sido cargados al repositorio para su revisión técnica.
 
 Atentamente,
-Niafiola Cartaya | Data Analyst
+Niafiola Cartaya | Data Engineer
 ================================================================================
 */
 
@@ -187,7 +187,7 @@ COMMIT;
 /* ================================================================================
 CORREO DE CIERRE DE JORNADA - DEPARTAMENTO DE DATOS
 Para: Dirección de RRHH / Gerencia Técnica 
-De: Analista de Datos (Niafiola Cartaya)
+De: Data Engineer (Niafiola Cartaya)
 Asunto: Reporte de Optimización de Performance y Estabilización de Entorno HR - 28/01/2026
 ================================================================================
 
@@ -219,7 +219,7 @@ la integridad del esquema. Los cambios han sido persistidos con COMMIT.
 Quedo a disposición para cualquier duda técnica.
 
 Atentamente,
-Niafiola Cartaya | Analista de Datos
+Niafiola Cartaya | Data Engineer
 ================================================================================
 */
 
@@ -277,7 +277,7 @@ HAVING AVG(salary) > 8000;
 /* =============================================================================
 CORREO DE CIERRE DE JORNADA - DEPARTAMENTO DE DATOS
 Para: Dirección de RRHH / Gerencia Técnica 
-De: Analista de Datos (Niafiola Cartaya)
+De: Data Engineer (Niafiola Cartaya)
 Asunto: Reporte de Saneamiento, Integridad y Sincronización Masiva de Nómina - 13/02/2026
 ================================================================================
 
@@ -314,7 +314,7 @@ Los cambios han sido validados y persistidos exitosamente mediante COMMIT.
 Quedo a su entera disposición para cualquier aclaración técnica adicional.
 
 Atentamente,
-Niafiola Cartaya | Analista de Datos
+Niafiola Cartaya | Data Engineer
 ================================================================================
 
 /*
@@ -422,7 +422,7 @@ WHERE EMPLOYEE_ID = 888;
 /*==========================================================
 CORREO DE CIERRE DE JORNADA - DEPARTAMENTO DE DATOS
 Para: Dirección de RRHH / Gerencia Técnica
-De: Analista de Datos (Niafiola Cartaya)
+De: Data Engineer (Niafiola Cartaya)
 Asunto: Reporte de Saneamiento, Integridad y Sincronización de Nómina - 17/03/2026
 ============================================================
 
@@ -457,7 +457,97 @@ Los cambios han sido validados y persistidos exitosamente mediante COMMIT.
 Quedo a su entera disposición para cualquier aclaración técnica adicional.
 
 Atentamente,
-Niafiola Cartaya | Analista de Datos
+Niafiola Cartaya | Data Engineer
 ============================================================*/
+
+-- ==========================================================
+-- Implementación de Objetos de Esquema, Seguridad DCL y Auditoría de metadatos
+-- Fecha: 13/05/2026
+-- ==========================================================
+-- Ticket #017: Automatización y Gestión de Secuencias (DML/DDL)
+-- ==========================================================
+-- Implementamos la SEQUENCE SEQ_EMPLOYEE_ID para automatizar la generación de claves primarias en la tabla empleados.
+CREATE SEQUENCE SEQ_EMPLOYEE_ID
+START WITH 100
+INCREMENT BY 1
+NOCACHE;
+/
+-- ==========================================================
+-- Ticket #018: Seguridad de Esquema y Abstracción de Objetos (DCL)
+-- ==========================================================
+-- Nos cambiamos a SYS para desde allí otorgar el permiso GRANT
+-- Otorgamos permisos a nuestro common user C##ORACLE_HR  para la creación de SYNONYM
+GRANT CREATE SYNONYM TO C##ORACLE_HR;
+
+--Verificamos que efectivamente C##ORACLE_HR tiene el permiso que le di
+SELECT privilege
+FROM user_sys_privs
+WHERE privilege LIKE '%SYNONYM%'; 
+
+-- 2. Creamos el sinónimo para ocultar el nombre real de la vista maestra
+-- verificamos primero el nomre de la vista para ocualtar el nomre de la vista correcta
+
+-- creamos el SYNONYM
+CREATE OR REPLACE SYNONYM EMP_MASTER FOR V_MAESTRO_EMPLEADOS;
+
+-- ==========================================================
+-- Ticket #019: Gestión de Calidad y Mantenimiento
+-- ==========================================================
+-- Consulta para verificar el estado de mis objetos (verificar cuáles están invalid)
+SELECT object_name, object_type, status
+FROM user_objects
+WHERE object_name IN ('V_MAESTRO_EMPLEADOS', 'V_EQUIPO_CONTACTO');
+
+--Verificamos la existencia de tablas base:
+-- a veces las vistas fallan porque la tabla cambió.
+SELECT table_name
+FROM user_tables;
+
+-- Intentamos revalidar objetos después de cambios en el esquema
+-- Si el log dice "View alterada" pero sigue con X roja, es necesario compilar
+ALTER VIEW V_MAESTRO_EMPLEADOS COMPILE;
+ALTER VIEW V_EQUIPO_CONTACTO COMPILE;
+
+-- NOTA: Si después de COMPILE el status sigue siendo 'INVALID', 
+-- se debe revisar la integridad de las columnas en las tablas base.
+-- o si algún objeto dependiente fue eliminado.
+
+/*
+  ==========================================================
+  NOTA TÉCNICA DE CIERRE:
+
+ Se identificó al usuario real del esquema como C##ORACLE_HR (Common User), diferenciándolo del alias de la conexión.
+  ==========================================================
+*/
+
+/*==========================================================
+CORREO DE CIERRE DE JORNADA - DEPARTAMENTO DE DATOS
+Para: Dirección de RRHH / Gerencia Técnica
+De: Data Engineer (Niafiola Cartaya)
+Asunto: Reporte de SYNONYM, PRIVILEGIOS y Diccionario de Datos - 13/05/2026
+============================================================
+Estimados,
+
+He finalizado las operaciones de implementación de SEQUENCE, SYNONYM y consultas al Diccionario de Datos programadas para este ciclo. 
+
+Hitos alcanzados:
+
+1. SEQUENCE: Se implementó SEQ_EMPLOYEE_ID para automatizar la generación de claves primarias en la tabla de empleados..
+2. SYNONYM: Se creó el sinónimo EMP_MASTER para la vista V_MAESTRO_EMPLEADOS tras gestionar permisos de nivel DBA.
+
+Los cambios han sido validados y persistidos exitosamente mediante COMMIT.
+
+Hallazgos y Pendientes de Mantenimiento:
+
+Se detectaron dos vistas en estado INVALID (V_MAESTRO_EMPLEADOS y V_EQUIPO_CONTACTO) mediante la auditoría del Diccionario de Datos.
+
+Se realizó un intento de revalidación mediante el comando COMPILE, sin embargo, los objetos persisten en estado crítico.
+
+Acción futura: La reparación de la integridad de estas vistas queda programada como prioridad para la siguiente sesión.
+
+Atentamente,
+Niafiola Cartaya | Data Engineer
+============================================================*/
+
 
 
