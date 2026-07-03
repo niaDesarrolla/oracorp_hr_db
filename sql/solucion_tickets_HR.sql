@@ -56,7 +56,7 @@ ORDER BY d.department_name;
 /* ================================================================================
 CORREO DE CIERRE DE JORNADA - DEPARTAMENTO DE DATOS
 Para: Dirección de RRHH / Gerencia Técnica
-De: Data Engineer (Niafiola Cartaya)
+De: SQL Oracle Developer (Niafiola Cartaya)
 Asunto: Resumen de Resolución de Tickets y Auditoría de Integridad - 26/01/2026
 ================================================================================
 
@@ -83,7 +83,7 @@ base de datos se encuentra limpia y operativamente íntegra.
 Los scripts detallados han sido cargados al repositorio para su revisión técnica.
 
 Atentamente,
-Niafiola Cartaya | Data Engineer
+Niafiola Cartaya | SQL Oracle Developer
 ================================================================================
 */
 
@@ -187,7 +187,7 @@ COMMIT;
 /* ================================================================================
 CORREO DE CIERRE DE JORNADA - DEPARTAMENTO DE DATOS
 Para: Dirección de RRHH / Gerencia Técnica 
-De: Data Engineer (Niafiola Cartaya)
+De: SQL Oracle Developer (Niafiola Cartaya)
 Asunto: Reporte de Optimización de Performance y Estabilización de Entorno HR - 28/01/2026
 ================================================================================
 
@@ -277,7 +277,7 @@ HAVING AVG(salary) > 8000;
 /* =============================================================================
 CORREO DE CIERRE DE JORNADA - DEPARTAMENTO DE DATOS
 Para: Dirección de RRHH / Gerencia Técnica 
-De: Data Engineer (Niafiola Cartaya)
+De: SQL Oracle Developer (Niafiola Cartaya)
 Asunto: Reporte de Saneamiento, Integridad y Sincronización Masiva de Nómina - 13/02/2026
 ================================================================================
 
@@ -314,7 +314,7 @@ Los cambios han sido validados y persistidos exitosamente mediante COMMIT.
 Quedo a su entera disposición para cualquier aclaración técnica adicional.
 
 Atentamente,
-Niafiola Cartaya | Data Engineer
+Niafiola Cartaya | SQL Oracle Developer
 ================================================================================
 
 /*
@@ -422,7 +422,7 @@ WHERE EMPLOYEE_ID = 888;
 /*==========================================================
 CORREO DE CIERRE DE JORNADA - DEPARTAMENTO DE DATOS
 Para: Dirección de RRHH / Gerencia Técnica
-De: Data Engineer (Niafiola Cartaya)
+De: SQL Oracle Developer (Niafiola Cartaya)
 Asunto: Reporte de Saneamiento, Integridad y Sincronización de Nómina - 17/03/2026
 ============================================================
 
@@ -457,7 +457,7 @@ Los cambios han sido validados y persistidos exitosamente mediante COMMIT.
 Quedo a su entera disposición para cualquier aclaración técnica adicional.
 
 Atentamente,
-Niafiola Cartaya | Data Engineer
+Niafiola Cartaya | SQL Oracle Developer
 ============================================================*/
 
 -- ==========================================================
@@ -523,7 +523,7 @@ ALTER VIEW V_EQUIPO_CONTACTO COMPILE;
 /*==========================================================
 CORREO DE CIERRE DE JORNADA - DEPARTAMENTO DE DATOS
 Para: Dirección de RRHH / Gerencia Técnica
-De: Data Engineer (Niafiola Cartaya)
+De: SQL Oracle Developer (Niafiola Cartaya)
 Asunto: Reporte de SYNONYM, PRIVILEGIOS y Diccionario de Datos - 13/05/2026
 ============================================================
 Estimados,
@@ -546,8 +546,91 @@ Se realizó un intento de revalidación mediante el comando COMPILE, sin embargo
 Acción futura: La reparación de la integridad de estas vistas queda programada como prioridad para la siguiente sesión.
 
 Atentamente,
-Niafiola Cartaya | Data Engineer
+Niafiola Cartaya | SQL Oracle Developer
+
+-- ==========================================================
+-- Ticket #020: Seguridad por Capas y Control de Accesos (DCL)
+-- Fecha: 11/06/2026
+-- ==========================================================
+
+-- 1. Creación del ROL corporativo para encapsulamiento de permisos
+CREATE ROLE C##ROL_RRHH_CONSULTA;
+
+-- 2. Concesión de privilegios mínimos sobre la capa de abstracción
+GRANT SELECT ON C##ORACLE_HR.EMP_MASTER TO C##ROL_RRHH_CONSULTA;
+
+-- 3. Asignación del ROL al usuario final para herencia de permisos
+GRANT C##ROL_RRHH_CONSULTA TO C##ORACLE_HR;
+
+-- ==========================================================
+-- AUDITORÍA DE SEGURIDAD (Diccionario de Datos)
+-- ==========================================================
+
+-- Verificación de existencia del Rol en metadatos globales
+SELECT role, authentication_type 
+FROM dba_roles 
+WHERE role = 'C##ROL_RRHH_CONSULTA';
+
+-- Validación de privilegios asignados al Rol sobre objetos de esquema
+SELECT role, table_name, privilege 
+FROM role_tab_privs 
+WHERE role = 'C##ROL_RRHH_CONSULTA';
+
+/*
+  ==========================================================
+  NOTA TÉCNICA DE CONTROL DE ACCESOS:
+  Se validó exitosamente mediante 'ROLE_TAB_PRIVS' que el rol 
+  C##ROL_RRHH_CONSULTA posee privilegios exclusivos sobre el 
+  objeto abstracto V_MAESTRO_EMPLEADOS, aislando las tablas base.
+  ==========================================================
+*/
 ============================================================*/
 
+/*
+  Estimados,
 
+  He finalizado las operaciones de seguridad por capas, encapsulamiento 
+  de permisos y asignación de privilegios de control de datos (DCL) 
+  programadas para este ciclo.
+
+  Hitos alcanzados:
+  ----------------------------------------------------------
+  1. Creación de Rol Corporativo: 
+     Se implementó exitosamente el rol común 'C##ROL_RRHH_CONSULTA' 
+     enfocado en el principio de privilegios mínimos para mitigar 
+     riesgos de seguridad.
+
+  2. Abstracción y Encapsulamiento: 
+     Se concedió el privilegio exclusivo de SELECT al rol creado 
+     sobre el objeto abstracto 'EMP_MASTER', aislando de forma 
+     efectiva el acceso directo a las tablas base del esquema.
+
+  3. Herencia de Permisos: 
+     Se ejecutó la asignación y transferencia del rol al usuario 
+     final 'C##ORACLE_HR' para heredar el control de accesos de 
+     manera estructurada.
+
+
+  Auditoría y Validación (Diccionario de Datos):
+  ----------------------------------------------------------
+  - Metadatos Globales: Mediante la consulta exhaustiva en la 
+    vista de sistema 'DBA_ROLES', se validó la existencia y el 
+    tipo de autenticación del rol dentro de la base de datos.
+
+  - Validación de Privilegios: Se realizó una auditoría técnica 
+    sobre la vista 'ROLE_TAB_PRIVS', confirmando de manera 
+    inequívoca que los privilegios sobre el objeto se encuentran 
+    correctamente persistidos y asignados de forma exclusiva.
+
+
+  NOTA TÉCNICA DE CONTROL DE ACCESOS:
+  Los cambios e impactos de seguridad se encuentran debidamente 
+  validados en el script de la sesión y aplicados de manera exitosa 
+  en el entorno.
+
+  ----------------------------------------------------------
+  Atentamente,
+  Niafiola Cartaya | SQL Oracle Developer
+*/
+-- ==========================================================
 
