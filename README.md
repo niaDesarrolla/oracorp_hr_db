@@ -19,7 +19,11 @@ Durante el desarrollo, se resolvieron los siguientes incidentes críticos:
 * **Optimización de Consultas Agregadas:** Dominio del **Orden de Ejecución Lógico de SQL** para la resolución de conflictos de alcance de *Alias* y filtrado de grupos complejos, optimizando el procesamiento del motor de base de datos.
 * **Sincronización de Datos mediante Subconsultas Correlacionadas (UPDATE):** Se superó la limitación de las actualizaciones masivas convencionales mediante el uso de subconsultas correlacionadas. Este enfoque permitió que la tabla oficial (EMPLOYEES) sincronizara atributos específicos (como salarios y nombres) basándose en una tabla de origen externa (EMPLOYEES_TEMP), garantizando que solo se modificaran los registros vinculados y manteniendo la integridad del resto de la data.
 * **Garantía de Idempotencia en Procesos de Inserción (Filtro **NOT EXISTS**):** Se implementó un blindaje lógico en el comando **INSERT** mediante la cláusula **WHERE NOT EXISTS**. Esta técnica previene el error crítico **ORA-00001**(violación de Primary Key) al validar la preexistencia del registro antes de intentar la escritura. Este **filtro de seguridad** otorga resiliencia al script, permitiendo ejecuciones recurrentes sin generar duplicados ni interrupciones por errores de identidad.
-
+* **Seguridad de Esquema mediante Abstracción y Sinónimos:** Se implementó el desafío de ocultar la estructura interna y los nombres reales de los objetos críticos del esquema. Mediante el uso de sinónimos (`SYNONYM`), se logró aislar la vista maestra de empleados, garantizando la seguridad por capas y la integridad de los accesos a los datos.
+* **Gestión de Calidad y Diagnóstico de Estado de Objetos:** Se resolvió el desafío de identificar y depurar fallas de dependencia en objetos rotos dentro del esquema. Mediante el uso de consultas de auditoría al Diccionario de Datos (`USER_OBJECTS`) y comandos de compilación explícita (`COMPILE`), se logró diagnosticar el estado crítico de vistas inválidas, garantizando la mantenibilidad y estabilidad del entorno de base de datos.
+* **Encapsulamiento de Privilegios mediante Roles Corporativos:** Se implementó el desafío de centralizar y estructurar la asignación de permisos de control de datos (DCL) para evitar la concesión directa a usuarios finales. Mediante la creación de un rol común y la transferencia de herencia de permisos, se logró establecer un control de accesos escalable, garantizando el principio de privilegios mínimos.
+* **Auditoría de Seguridad en Metadatos de Control de Acceso:** Se resolvió el desafío de validar de manera inequívoca la persistencia y aislamiento de los privilegios otorgados en el esquema. Mediante el uso de consultas avanzadas al Diccionario de Datos (`DBA_ROLES` y `ROLE_TAB_PRIVS`), se logró auditar la existencia del rol y sus permisos exclusivos sobre la capa de abstracción, garantizando la integridad de las políticas de seguridad del sistema.
+---
 ## 📂 Estructura del Repositorio
 * `/sql`: Contiene los scripts de configuración (`setup`) y carga de datos.
 * `/notes`: Documentación teórica, reportes de incidencias y glosario técnico.
@@ -117,5 +121,33 @@ Se realizó una auditoría de rendimiento sobre el esquema de Recursos Humanos, 
 * **Solución:** Se realizó un diagnóstico de colisiones que derivó en un cambio de estrategia, pasando de un `INSERT` fallido a un `UPDATE` correlacionado para actualizar perfiles preexistentes.
 * **Aprendizaje:** La flexibilidad para alternar entre inserción y actualización (lógica *Upsert*) es fundamental para mantener la sincronía entre tablas sin violar las restricciones de unicidad de la Primary Key.
 
+---
+
+#### Implementación de Objetos de Esquema, Seguridad DCL y Auditoría de Metadata (13/05/2026)
+
+**1. Control de Accesos y Abstracción de Esquema**
+* **Problema:** Necesidad de otorgar permisos de manera segura y ocultar el nombre real de la vista maestra `V_MAESTRO_EMPLEADOS` para evitar la exposición directa de la arquitectura del esquema.
+* **Solución:** Se escalaron privilegios temporales a `SYS` para otorgar el permiso `CREATE SYNONYM` al usuario común `C##ORACLE_HR`, validando su persistencia en `USER_SYS_PRIVS` y creando exitosamente el sinónimo `EMP_MASTER`.
+* **Aprendizaje:** Se descubrió que el motor de Oracle requiere la diferenciación explícita entre un *Common User* (`C##ORACLE_HR`) y el alias de la conexión, y cómo los sinónimos actúan como una capa esencial de abstracción para la seguridad.
+
+**2. Auditoría y Revalidación de Objetos Inválidos**
+* **Problema:** Presencia de vistas en estado crítico (`INVALID`) debido a posibles alteraciones o desalineaciones estructurales con sus tablas base.
+* **Solución:** Se realizó un diagnóstico del Diccionario de Datos mediante la vista de sistema `USER_OBJECTS` y se ejecutó un intento de revalidación explícita utilizando sentencias `ALTER VIEW ... COMPILE`.
+* **Aprendizaje:** Se descubrió que si un objeto persiste en estado `INVALID` tras la compilación forzada, el motor de base de datos exige una revisión obligatoria de la integridad de las columnas en las tablas dependientes o la verificación de objetos eliminados.
+
+#### Creación de Roles, Asignación de Privilegios y Auditoría al Diccionario de Datos (11/06/2026)
+
+**1. Configuración de Roles y Herencia de Permisos (DCL)**
+* **Problema:** Necesidad de desacoplar los privilegios directos sobre los objetos del esquema y automatizar la asignación de accesos seguros para el departamento de Recursos Humanos.
+* **Solución:** Se implementó el rol corporativo común `C##ROL_RRHH_CONSULTA`, asignándole privilegios exclusivos de lectura sobre la capa abstracta y ejecutando la sentencia `GRANT` para transferir dicho rol al usuario final `C##ORACLE_HR`.
+* **Aprendizaje:** Se consolidó el conocimiento sobre cómo los roles en Oracle actúan como contenedores intermedios de seguridad, permitiendo que múltiples usuarios hereden un conjunto estandarizado de privilegios sin comprometer la propiedad de los objetos.
+
+**2. Auditoría y Validación de Seguridad en el Diccionario de Datos**
+* **Problema:** Requerimiento técnico de comprobar que el rol creado existe globalmente y que sus privilegios están estrictamente limitados a los objetos abstractos sin exposición de las tablas base.
+* **Solución:** Se ejecutó una auditoría exhaustiva en las vistas de sistema `DBA_ROLES` (para validar la existencia y tipo de autenticación) y `ROLE_TAB_PRIVS` (para confirmar la asignación del privilegio `SELECT` sobre el objeto `EMP_MASTER`).
+* **Aprendizaje:** Se descubrió la utilidad de las vistas del diccionario de datos para la verificación forense de seguridad, confirmando que la capa de abstracción aísla de manera efectiva los datos sensibles del acceso directo no autorizado.
+
+---
+  
 ---
 *Este es un proyecto educativo en constante evolución.*
